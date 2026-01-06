@@ -8,7 +8,13 @@ To accommodate the new openMenu, a modified version of [GD MENU Card Manager](ht
 
 ## Table of Contents
 
-table of contents go here
+- [Table of Contents](#table-of-contents)
+- [Current Version](#current-version)
+- [Changelog](#changelog)
+- [Changes to openMenu and GD MENU Card Manager](#changes-to-openmenu-and-gd-menu-card-manager)
+  - [Changes Since openMenu v1.3.0](#changes-since-openmenu-v130)
+  - [Changes Since GD MENU Card Manager v2.0.1](#changes-since-gd-menu-card-manager-v201)
+- [Usage Tutorial](#usage-tutorial)
 
 ## Current Version
 
