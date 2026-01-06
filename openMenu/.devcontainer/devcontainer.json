@@ -1,0 +1,17 @@
+{
+  "name": "Dreamcast Dev",
+  "image": "sbstnc/openmenu-dev:0.2.2",
+
+  "runArgs": [ "--userns=host" ],
+
+  "containerEnv": { "HOME": "/home/dev" },
+  
+  "remoteUser": "dev",
+
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [ "ms-vscode.cpptools" ]
+    }
+  }
+}
