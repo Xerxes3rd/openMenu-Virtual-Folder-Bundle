@@ -130,6 +130,25 @@ static int list_len;
 static uint8_t cusor_alpha = 255;
 static char cusor_step = -5;
 
+/* Marquee scrolling state */
+#define MARQUEE_DISPLAY_WIDTH 49
+#define MARQUEE_INITIAL_PAUSE_FRAMES 60
+#define MARQUEE_END_PAUSE_FRAMES 90
+#define MARQUEE_SCROLL_SPEED_FRAMES 4
+
+typedef enum {
+    MARQUEE_STATE_INITIAL_PAUSE,
+    MARQUEE_STATE_SCROLL_LEFT,
+    MARQUEE_STATE_END_PAUSE,
+    MARQUEE_STATE_SCROLL_RIGHT
+} marquee_state_t;
+
+static marquee_state_t marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+static int marquee_offset = 0;
+static int marquee_timer = 0;
+static int marquee_max_offset = 0;
+static int marquee_last_selected = -1;
+
 /*static theme_color gdemu_colors = {
     .text_color = color_main_default,
     .highlight_color = color_main_highlight,
@@ -169,6 +188,63 @@ draw_bg_layers(void) {
 }
 
 static void
+marquee_reset(void) {
+    marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+    marquee_offset = 0;
+    marquee_timer = MARQUEE_INITIAL_PAUSE_FRAMES;
+    marquee_max_offset = 0;
+}
+
+static void
+marquee_update_animation(int name_length) {
+    int max_offset = name_length - MARQUEE_DISPLAY_WIDTH;
+    if (max_offset < 0) {
+        max_offset = 0;
+    }
+
+    marquee_max_offset = max_offset;
+
+    if (marquee_timer > 0) {
+        marquee_timer--;
+        return;
+    }
+
+    switch (marquee_state) {
+        case MARQUEE_STATE_INITIAL_PAUSE:
+            marquee_state = MARQUEE_STATE_SCROLL_LEFT;
+            marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            break;
+
+        case MARQUEE_STATE_SCROLL_LEFT:
+            marquee_offset++;
+            if (marquee_offset >= marquee_max_offset) {
+                marquee_offset = marquee_max_offset;
+                marquee_state = MARQUEE_STATE_END_PAUSE;
+                marquee_timer = MARQUEE_END_PAUSE_FRAMES;
+            } else {
+                marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            }
+            break;
+
+        case MARQUEE_STATE_END_PAUSE:
+            marquee_state = MARQUEE_STATE_SCROLL_RIGHT;
+            marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            break;
+
+        case MARQUEE_STATE_SCROLL_RIGHT:
+            marquee_offset--;
+            if (marquee_offset <= 0) {
+                marquee_offset = 0;
+                marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+                marquee_timer = MARQUEE_INITIAL_PAUSE_FRAMES;
+            } else {
+                marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            }
+            break;
+    }
+}
+
+static void
 draw_gamelist(void) {
     char buffer[192];
     const int X_ADJUST_TEXT = 7;
@@ -196,6 +272,12 @@ draw_gamelist(void) {
             snprintf(buffer, 191, "%s", list_current[current_starting_index + i]->name);
         }
         if ((current_starting_index + i) == current_selected_item) {
+            /* Check if selection changed */
+            if (current_selected_item != marquee_last_selected) {
+                marquee_reset();
+                marquee_last_selected = current_selected_item;
+            }
+
             /* grab the disc number and if there is more than one */
             int disc_set = list_current[current_selected_item]->disc[2] - '0';
 
@@ -221,12 +303,35 @@ draw_gamelist(void) {
             }
             cusor_alpha += cusor_step;
             font_bmp_set_color(highlight_text_color);
+
+            /* Handle marquee for long names */
+            int name_len = strlen(buffer);
+            if (name_len > MARQUEE_DISPLAY_WIDTH) {
+                marquee_update_animation(name_len);
+                /* Show only 49-char window */
+                char saved_char = buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH];
+                buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH] = '\0';
+                font_bmp_draw_main(cur_theme->pos_gameslist_x + X_ADJUST_TEXT,
+                                   cur_theme->pos_gameslist_y + Y_ADJUST_TEXT + (i * 21),
+                                   &buffer[marquee_offset]);
+                buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH] = saved_char;
+            } else {
+                font_bmp_draw_main(cur_theme->pos_gameslist_x + X_ADJUST_TEXT,
+                                   cur_theme->pos_gameslist_y + Y_ADJUST_TEXT + (i * 21),
+                                   buffer);
+            }
         } else {
             font_bmp_set_color(cur_theme->colors.text_color);
-        }
 
-        font_bmp_draw_main(cur_theme->pos_gameslist_x + X_ADJUST_TEXT,
-                           cur_theme->pos_gameslist_y + Y_ADJUST_TEXT + (i * 21), buffer);
+            /* Truncate long names for non-selected items */
+            if (strlen(buffer) > MARQUEE_DISPLAY_WIDTH) {
+                buffer[MARQUEE_DISPLAY_WIDTH] = '\0';
+            }
+
+            font_bmp_draw_main(cur_theme->pos_gameslist_x + X_ADJUST_TEXT,
+                               cur_theme->pos_gameslist_y + Y_ADJUST_TEXT + (i * 21),
+                               buffer);
+        }
     }
 }
 
@@ -567,6 +672,10 @@ FUNCTION(UI_NAME, setup) {
     current_starting_index = 0;
     navigate_timeout = INPUT_TIMEOUT_INITIAL * 2;
     draw_current = DRAW_UI;
+
+    /* Initialize marquee state */
+    marquee_reset();
+    marquee_last_selected = -1;
 }
 
 FUNCTION_INPUT(UI_NAME, handle_input) {

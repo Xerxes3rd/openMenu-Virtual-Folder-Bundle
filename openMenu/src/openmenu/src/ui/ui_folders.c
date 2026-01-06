@@ -89,6 +89,25 @@ static bool direction_current = false;
 static uint8_t cusor_alpha = 255;
 static char cusor_step = -5;
 
+/* Marquee scrolling state */
+#define MARQUEE_DISPLAY_WIDTH 49
+#define MARQUEE_INITIAL_PAUSE_FRAMES 60
+#define MARQUEE_END_PAUSE_FRAMES 90
+#define MARQUEE_SCROLL_SPEED_FRAMES 4
+
+typedef enum {
+    MARQUEE_STATE_INITIAL_PAUSE,
+    MARQUEE_STATE_SCROLL_LEFT,
+    MARQUEE_STATE_END_PAUSE,
+    MARQUEE_STATE_SCROLL_RIGHT
+} marquee_state_t;
+
+static marquee_state_t marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+static int marquee_offset = 0;
+static int marquee_timer = 0;
+static int marquee_max_offset = 0;
+static int marquee_last_selected = -1;
+
 /* L+R trigger state for back navigation */
 static bool trig_l_held = false;
 static bool trig_r_held = false;
@@ -113,6 +132,63 @@ draw_bg_layers(void) {
     {
         const dimen_RECT right = {.x = 0, .y = 0, .w = 128, .h = 480};
         draw_draw_sub_image(512, 0, 128, 480, COLOR_WHITE, &txr_bg_right, &right);
+    }
+}
+
+static void
+marquee_reset(void) {
+    marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+    marquee_offset = 0;
+    marquee_timer = MARQUEE_INITIAL_PAUSE_FRAMES;
+    marquee_max_offset = 0;
+}
+
+static void
+marquee_update_animation(int name_length) {
+    int max_offset = name_length - MARQUEE_DISPLAY_WIDTH;
+    if (max_offset < 0) {
+        max_offset = 0;
+    }
+
+    marquee_max_offset = max_offset;
+
+    if (marquee_timer > 0) {
+        marquee_timer--;
+        return;
+    }
+
+    switch (marquee_state) {
+        case MARQUEE_STATE_INITIAL_PAUSE:
+            marquee_state = MARQUEE_STATE_SCROLL_LEFT;
+            marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            break;
+
+        case MARQUEE_STATE_SCROLL_LEFT:
+            marquee_offset++;
+            if (marquee_offset >= marquee_max_offset) {
+                marquee_offset = marquee_max_offset;
+                marquee_state = MARQUEE_STATE_END_PAUSE;
+                marquee_timer = MARQUEE_END_PAUSE_FRAMES;
+            } else {
+                marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            }
+            break;
+
+        case MARQUEE_STATE_END_PAUSE:
+            marquee_state = MARQUEE_STATE_SCROLL_RIGHT;
+            marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            break;
+
+        case MARQUEE_STATE_SCROLL_RIGHT:
+            marquee_offset--;
+            if (marquee_offset <= 0) {
+                marquee_offset = 0;
+                marquee_state = MARQUEE_STATE_INITIAL_PAUSE;
+                marquee_timer = MARQUEE_INITIAL_PAUSE_FRAMES;
+            } else {
+                marquee_timer = MARQUEE_SCROLL_SPEED_FRAMES;
+            }
+            break;
     }
 }
 
@@ -142,8 +218,17 @@ draw_gamelist(void) {
         /* Check if this is the selected item */
         bool is_selected = (list_idx == current_selected_item);
 
+        /* Check if selection changed */
+        if (is_selected && (current_selected_item != marquee_last_selected)) {
+            marquee_reset();
+            marquee_last_selected = current_selected_item;
+        }
+
         /* Get disc info for multidisc indicator */
         int disc_set = item->disc[2] - '0';
+
+        /* Format item text - already has brackets for folders */
+        snprintf(buffer, 191, "%s", item->name);
 
         /* Draw cursor for selected item */
         if (is_selected) {
@@ -160,19 +245,88 @@ draw_gamelist(void) {
             } else {
                 font_bmp_set_color(cur_theme->colors.highlight_color);
             }
+
+            /* Handle marquee for long names */
+            int name_len = strlen(buffer);
+
+            /* Check if it's a folder (starts with '[') */
+            if (buffer[0] == '[' && name_len > 2) {
+                /* Extract inner text (between brackets) */
+                char* inner_start = &buffer[1];
+                char* bracket_end = strrchr(buffer, ']');
+                if (bracket_end && bracket_end > inner_start) {
+                    int inner_len = bracket_end - inner_start;
+
+                    if (inner_len > 47) {
+                        /* Folder name needs marquee - keep brackets fixed */
+                        /* Add 2 to compensate for display width difference (47 vs 49) */
+                        marquee_update_animation(inner_len + 2);
+
+                        /* Temporarily null-terminate to show 47-char window of inner text */
+                        char saved_char = inner_start[marquee_offset + 47];
+                        inner_start[marquee_offset + 47] = '\0';
+
+                        /* Build display string: [ + scrolled_text + ] */
+                        char display_buf[50];
+                        snprintf(display_buf, 50, "[%s]", &inner_start[marquee_offset]);
+
+                        font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                                           list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                                           display_buf);
+
+                        inner_start[marquee_offset + 47] = saved_char;
+                    } else {
+                        /* Folder name fits in 49 chars */
+                        font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                                           list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                                           buffer);
+                    }
+                } else {
+                    /* Malformed bracket - display as-is */
+                    font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                                       list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                                       buffer);
+                }
+            } else if (name_len > MARQUEE_DISPLAY_WIDTH) {
+                /* Non-folder long name - normal marquee */
+                marquee_update_animation(name_len);
+                char saved_char = buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH];
+                buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH] = '\0';
+                font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                                   list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                                   &buffer[marquee_offset]);
+                buffer[marquee_offset + MARQUEE_DISPLAY_WIDTH] = saved_char;
+            } else {
+                /* Short name - display normally */
+                font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                                   list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                                   buffer);
+            }
         } else {
             /* Normal text color */
             font_bmp_set_color(cur_theme->colors.text_color);
+
+            /* Truncate long names for non-selected items */
+            int name_len = strlen(buffer);
+            if (name_len > MARQUEE_DISPLAY_WIDTH) {
+                /* Check if it's a folder */
+                if (buffer[0] == '[' && name_len > 2) {
+                    /* Truncate inner text at 47 chars and keep closing bracket */
+                    buffer[48] = ']';
+                    buffer[49] = '\0';
+                } else {
+                    /* Regular truncation */
+                    buffer[MARQUEE_DISPLAY_WIDTH] = '\0';
+                }
+            }
+
+            /* Draw item text */
+            int list_x = cur_theme->list_x ? cur_theme->list_x : 11;
+            int list_y = cur_theme->list_y ? cur_theme->list_y : 77;
+            font_bmp_draw_main(list_x + X_ADJUST_TEXT,
+                               list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING),
+                               buffer);
         }
-
-        /* Format item text - already has brackets for folders */
-        snprintf(buffer, 191, "%s", item->name);
-
-        /* Draw item text */
-        int list_x = cur_theme->list_x ? cur_theme->list_x : 11;
-        int list_y = cur_theme->list_y ? cur_theme->list_y : 77;
-        font_bmp_draw_main(list_x + X_ADJUST_TEXT,
-                          list_y + Y_ADJUST_TEXT + (i * ITEM_SPACING), buffer);
     }
 
     /* Update strobe animation */
@@ -587,6 +741,10 @@ FUNCTION(UI_NAME, setup) {
 
     trig_l_held = false;
     trig_r_held = false;
+
+    /* Initialize marquee state */
+    marquee_reset();
+    marquee_last_selected = -1;
 
     printf("FOLDERS: Setup complete, %d items\n", list_len);
 }

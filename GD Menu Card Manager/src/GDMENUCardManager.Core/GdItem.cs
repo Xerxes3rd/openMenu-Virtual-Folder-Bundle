@@ -10,7 +10,7 @@ namespace GDMENUCardManager.Core
 
     public sealed class GdItem : INotifyPropertyChanged
     {
-        public static int namemaxlen = 39;
+        public static int namemaxlen = 256;
         public static int serialmaxlen = 10;
         public static int foldermaxlen = 512;
 

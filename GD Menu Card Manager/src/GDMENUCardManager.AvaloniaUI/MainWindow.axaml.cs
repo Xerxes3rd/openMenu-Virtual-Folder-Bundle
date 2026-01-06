@@ -130,7 +130,7 @@ namespace GDMENUCardManager
             if (bool.TryParse(ConfigurationManager.AppSettings["UseBinaryString"], out bool useBinaryString))
                 Converter.ByteSizeToStringConverter.UseBinaryString = useBinaryString;
             if (int.TryParse(ConfigurationManager.AppSettings["CharLimit"], out int charLimit))
-                GdItem.namemaxlen = Math.Min(255, Math.Max(charLimit, 1));
+                GdItem.namemaxlen = Math.Min(256, Math.Max(charLimit, 1));
             if (bool.TryParse(ConfigurationManager.AppSettings["TruncateMenuGDI"], out bool truncateMenuGDI))
                 Manager.TruncateMenuGDI = truncateMenuGDI;
 

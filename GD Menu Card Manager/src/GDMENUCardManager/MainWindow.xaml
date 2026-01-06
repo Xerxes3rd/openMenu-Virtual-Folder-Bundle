@@ -140,7 +140,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Label Margin="0 3 0 0">Search</Label>
-                    <TextBox Grid.Column="1" x:Name="tbFilter" Width="260" MaxLength="39" Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Grid.Column="1" x:Name="tbFilter" Width="260" MaxLength="256" Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <Button Grid.Column="2" Width="30" ToolTip="Search" IsDefault="{Binding Path=IsFocused, ElementName=tbFilter, Mode=OneWay}" Click="ButtonSearch_Click">
                         <ContentControl Content="{StaticResource ViewMagnify}" />
                     </Button>

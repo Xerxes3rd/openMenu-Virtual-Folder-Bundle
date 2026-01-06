@@ -107,7 +107,7 @@ static struct gd_item back_button = {"Back", "", " ", "DIR", "", "", 0, {' '}, "
 #define MAX_FOLDER_CHILDREN 1024
 
 typedef struct folder_node {
-    char name[64];
+    char name[256];
     struct folder_node* parent;
     struct folder_node* children[MAX_FOLDER_CHILDREN];
     int num_children;
@@ -119,7 +119,7 @@ typedef struct folder_node {
 typedef struct {
     char path[MAX_FOLDER_PATH];
     int depth;
-    char breadcrumbs[MAX_FOLDER_DEPTH][64];
+    char breadcrumbs[MAX_FOLDER_DEPTH][256];
     int cursor_positions[MAX_FOLDER_DEPTH];
 } folder_state_t;
 
@@ -610,7 +610,7 @@ list_item_get(int idx) {
 /* Folder navigation system functions */
 
 static int
-folder_parse_path(const char* folder_path, char segments[][64], int max_segments) {
+folder_parse_path(const char* folder_path, char segments[][256], int max_segments) {
     if (!folder_path || folder_path[0] == '\0') {
         return 0;
     }
@@ -621,7 +621,7 @@ folder_parse_path(const char* folder_path, char segments[][64], int max_segments
 
     while ((end = strchr(start, '\\')) != NULL && segment_count < max_segments) {
         size_t len = end - start;
-        if (len > 0 && len < 64) {
+        if (len > 0 && len < 256) {
             memcpy(segments[segment_count], start, len);
             segments[segment_count][len] = '\0';
             segment_count++;
@@ -630,8 +630,8 @@ folder_parse_path(const char* folder_path, char segments[][64], int max_segments
     }
 
     if (*start && segment_count < max_segments) {
-        strncpy(segments[segment_count], start, 63);
-        segments[segment_count][63] = '\0';
+        strncpy(segments[segment_count], start, 255);
+        segments[segment_count][255] = '\0';
         segment_count++;
     }
 
@@ -659,8 +659,8 @@ folder_find_or_create_node(folder_node_t* parent, const char* name) {
         return NULL;
     }
 
-    strncpy(node->name, name, 63);
-    node->name[63] = '\0';
+    strncpy(node->name, name, 255);
+    node->name[255] = '\0';
     node->parent = parent;
 
     /* Allocate initial capacity for games (start with 64, will grow as needed) */
@@ -687,7 +687,7 @@ folder_find_by_path(folder_node_t* root, const char* path) {
         return root;
     }
 
-    char segments[MAX_FOLDER_DEPTH][64];
+    char segments[MAX_FOLDER_DEPTH][256];
     int depth = folder_parse_path(path, segments, MAX_FOLDER_DEPTH);
 
     folder_node_t* current = root;
@@ -765,7 +765,7 @@ list_folder_init(void) {
     for (int i = 1; i < num_items_BASE; i++) {
         gd_item* item = &gd_slots_BASE[i];
 
-        char segments[MAX_FOLDER_DEPTH][64];
+        char segments[MAX_FOLDER_DEPTH][256];
         int depth = folder_parse_path(item->folder, segments, MAX_FOLDER_DEPTH);
 
         folder_node_t* current = folder_tree_root;
@@ -938,8 +938,8 @@ list_folder_enter(int folder_idx, int cursor_pos) {
     /* Save cursor position before descending */
     folder_state.cursor_positions[folder_state.depth] = cursor_pos;
 
-    strncpy(folder_state.breadcrumbs[folder_state.depth], current_node->children[folder_idx]->name, 63);
-    folder_state.breadcrumbs[folder_state.depth][63] = '\0';
+    strncpy(folder_state.breadcrumbs[folder_state.depth], current_node->children[folder_idx]->name, 255);
+    folder_state.breadcrumbs[folder_state.depth][255] = '\0';
     folder_state.depth++;
 
     folder_state.path[0] = '\0';
