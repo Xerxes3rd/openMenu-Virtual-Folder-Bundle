@@ -38,25 +38,24 @@ Many components of both openMenu and GD MENU Card Manager have been drastically 
   * Complete subfolder path maximum length is 256 characters
   * L + R is now a shortcut to go back one directory
 - Long entry names now supported (256 characters), along with marquee scrolling over those exceeding 49 characters.
-- Settings menu now has wrap-around cursor scrolling.
 - Scroll mode improvements:
   * Jumping cursor fixed
   * Toggle index numbers in the game list (On/Off)
   * Toggle artwork display (On/Off)
-- GDEMU version is now shown in the settings menu.
-- openMenu build now shown in settings menu.
-- Credits updated.
-- VMU beep setting disabled (feature is not implemented yet).
+- Settings menu now has wrap-around cursor scrolling.
+- GDEMU firmware version and openMenu build version now shown in the settings menu.
 - Save file is no longer written on every openMenu startup:
   * Now only written when saving settings or during save file migration.
 - Non-game discs are mounted by GDEMU instantly, returning user to BIOS for things like playing audio CDs.
 - Game ID is not sent to VM2/VMUPro/USB4MAPLE when a non-game disc is launched (e.g., an audio CD).
+- VMU beep setting disabled (feature is not implemented yet).
+- Credits updated.
 
 ### Changes Since GD MENU Card Manager v2.0.1
 
 - Game list column widths and window width adjusted for better visibility.
 - Version check in About window removed (with possibility of returning in the future).
-- A new "Folder" column added when building menu in "openMenu" mode, allowing users to specify virtual folder path for a disc image (e.g., `Games\RPGs\NTSC-U`).
+- A new "Folder" column added when building menu in openMenu mode, allowing users to specify virtual folder path for a disc image (e.g., `Games\RPGs\NTSC-U`).
 - Non-game disc images now supported, with a new column named "Type" added where users can select from two drop-down options: `Game` and `Other`. Note that non-game disc images are automatically assigned the `Other` value, as openMenu will check this property to decide how to initialize the GDEMU.
 - Disc image names no longer limited to 39 characters, increased to 256 characters.
 - Disc numbers can now be customized by the user (e.g., `1/3`, `2/4`).
