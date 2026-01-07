@@ -13,6 +13,7 @@ To accommodate the new openMenu, a modified version of [GD MENU Card Manager](ht
 - [Table of Contents](#table-of-contents)
 - [Current Version](#current-version)
 - [Changelog](#changelog)
+- [Credits](#credits)
 - [Changes to openMenu and GD MENU Card Manager](#changes-to-openmenu-and-gd-menu-card-manager)
   - [Changes Since openMenu v1.3.0](#changes-since-openmenu-v130)
   - [Changes Since GD MENU Card Manager v2.0.1](#changes-since-gd-menu-card-manager-v201)
@@ -28,6 +29,20 @@ openMenu Virtual Folder Bundle is currently at version [1.0](xxxx).
 
 - **Version 1.0 (2025-01-XX)**
   * Initial release.
+
+## Credits
+
+- **Programming**
+  * Derek Pascarella (ateam)
+- **Testing**
+  * XXX
+  * XXX
+  * Kanji
+- **Special Thanks**
+  * mrneo240 for his original work on openMenu
+  * megavolt85 for forking openMenu and adding new features
+  * scstnc for forking openMenu and adding a Docker development container
+  * All of the wonderful people in the Dreamcast scene
 
 ## Changes to openMenu and GD MENU Card Manager
 
