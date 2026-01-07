@@ -172,6 +172,7 @@ After that, open GD MENU Card Manager with GDEMU SD card inserted, then click **
 This project includes a modified version of openMenu, which is:
 
 **Copyright © 2021, Hayden Kowalchuk**
+
 Licensed under the Modified BSD License (3-Clause BSD License)
 
 The original openMenu project was created by Hayden Kowalchuk (mrneo240), with subsequent forks and contributions by megavolt85 and sbstnc.
@@ -185,7 +186,9 @@ For the full openMenu license text, see `./openMenu/LICENSE.md`.
 This project includes a modified version of GD MENU Card Manager by sonik-br:
 
 **Original work**: Copyright (C) 2021, sonik-br
+
 **Original repository**: https://github.com/sonik-br/GDMENUCardManager
+
 Licensed under the GNU General Public License v3.0 (GPL-3.0)
 
 **Modifications made by Derek Pascarella (ateam) in 2026:**
