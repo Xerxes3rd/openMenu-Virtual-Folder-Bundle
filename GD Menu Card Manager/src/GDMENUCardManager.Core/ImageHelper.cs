@@ -366,6 +366,13 @@ namespace GDMENUCardManager.Core
                     item.Ip.Disc = discValue.Trim();
             }
 
+            var itemTypePath = Path.Combine(item.FullFolderPath, Constants.TypeTextFile);
+            if (await Helper.FileExistsAsync(itemTypePath))
+            {
+                var typeValue = await Helper.ReadAllTextAsync(itemTypePath);
+                item.DiscType = GdItem.GetDiscTypeDisplayValue(typeValue);
+            }
+
             item.Name = item.Name.Trim();
             item.ProductNumber = item.ProductNumber.Trim();
 
@@ -646,6 +653,13 @@ namespace GDMENUCardManager.Core
                 var discValue = await Helper.ReadAllTextAsync(itemDiscPath);
                 if (!string.IsNullOrWhiteSpace(discValue))
                     item.Ip.Disc = discValue.Trim();
+            }
+
+            var itemTypePath = Path.Combine(item.FullFolderPath, Constants.TypeTextFile);
+            if (await Helper.FileExistsAsync(itemTypePath))
+            {
+                var typeValue = await Helper.ReadAllTextAsync(itemTypePath);
+                item.DiscType = GdItem.GetDiscTypeDisplayValue(typeValue);
             }
 
             item.Name = item.Name.Trim();
