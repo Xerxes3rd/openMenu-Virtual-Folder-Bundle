@@ -37,13 +37,14 @@ The latest version of **openMenu Virtual Folder Bundle** is [1.0](xxxx).
 - **Programming**
   * Derek Pascarella (ateam)
 - **Testing**
-  * XXX
-  * XXX
+  * NO HXRO
+  * SEGA RPG FAN
   * Kanji
 - **Special Thanks**
   * mrneo240 for his original work on openMenu
   * megavolt85 for forking openMenu and adding new features
   * sbstnc for forking openMenu and adding a Docker development container
+  * sonik-br for his work on GD MENU Card Manager
   * All of the wonderful people in the Dreamcast scene
 
 ## Changes to openMenu and GD MENU Card Manager
