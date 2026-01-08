@@ -57,6 +57,7 @@ Many components of both openMenu and GD MENU Card Manager have been drastically 
 - New "Folders" Style mode, plus custom themes:
   * Virtual folder support included eight levels of nested subfolders.
   * Complete subfolder path maximum length is 256 characters, including backslashes (e.g., `Games\JP\RPG`).
+  * Maximum number of virtual folders supported per SD card is 1024.
   * L Trigger + R Trigger is now a shortcut to go back one directory
 - Long entry names now supported (256 characters), along with marquee scrolling over those exceeding 49 characters.
 - Scroll mode improvements:
