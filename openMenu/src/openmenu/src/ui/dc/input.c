@@ -54,6 +54,14 @@ INPT_ReceiveFromHost(inputs _in) {
     _current.trg_left = _in.trg_left;
     _current.trg_right = _in.trg_right;
 
+    /* Keyboard modifiers */
+    _current.kbd_modifiers = _in.kbd_modifiers;
+
+    /* Keyboard buttons */
+    for (int index = 0; index < INPT_MAX_KEYBOARD_KEYS; index++) {
+        _current.kbd_buttons[index] = _in.kbd_buttons[index];
+    }
+
     _last = _in;
 }
 
@@ -140,4 +148,24 @@ INPT_TriggerValue(TRIGGER trigger) {
         default: break;
     }
     return 0;
+}
+
+bool
+INPT_KeyboardNone() {
+    for (int index = 0; index < INPT_MAX_KEYBOARD_KEYS; index++) {
+        if (_current.kbd_buttons[index] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+INPT_KeyboardButton(uint8_t kbtn) {
+    for (int index = 0; index < INPT_MAX_KEYBOARD_KEYS; index++) {
+        if (_current.kbd_buttons[index] == kbtn) {
+            return true;
+        }
+    }
+    return false;
 }

@@ -15,6 +15,7 @@
 #include <dc/flashrom.h>
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
+#include <dc/maple/keyboard.h>
 #include <dc/pvr.h>
 #include <dc/video.h>
 #include <kos/thread.h>
@@ -166,10 +167,13 @@ processInput(void) {
     unsigned int buttons;
 
     maple_device_t* cont;
-    cont_state_t* state;
+    maple_device_t* kbd;
+    cont_state_t* cont_state;
+    kbd_state_t* kbd_state;
 
     cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-    if (!cont) {
+    kbd = maple_enum_type(0, MAPLE_FUNC_KEYBOARD);
+    if (!cont && !kbd) {
         /* No controller - send neutral input to prevent phantom movement */
         memset(&_input, 0, sizeof(inputs));
         _input.axes_1 = 128; /* Neutral analog X */
@@ -177,34 +181,47 @@ processInput(void) {
         INPT_ReceiveFromHost(_input);
         return;
     }
-    state = (cont_state_t*)maple_dev_status(cont);
-
-    buttons = state->buttons;
 
     /*  Reset Everything */
     memset(&_input, 0, sizeof(inputs));
 
-    /* DPAD */
-    _input.dpad = (state->buttons >> 4) & ~240; // mrneo240 ;)
+    if (cont) {
+        cont_state = (cont_state_t*)maple_dev_status(cont);
 
-    /* BUTTONS */
-    _input.btn_a = (uint8_t)!!(buttons & CONT_A);
-    _input.btn_b = (uint8_t)!!(buttons & CONT_B);
-    _input.btn_x = (uint8_t)!!(buttons & CONT_X);
-    _input.btn_y = (uint8_t)!!(buttons & CONT_Y);
-    _input.btn_start = (uint8_t)!!(buttons & CONT_START);
+        buttons = cont_state->buttons;
 
-    /* ANALOG */
-    _input.axes_1 = ((uint8_t)(state->joyx) + 128);
-    _input.axes_2 = ((uint8_t)(state->joyy) + 128);
+        /* DPAD */
+        _input.dpad = (cont_state->buttons >> 4) & ~240; // mrneo240 ;)
 
-    /* TRIGGERS */
-    if (!strncmp("Dreamcast Fishing Controller", cont->info.product_name, 28)) {
-        _input.trg_left = 0;
-        _input.trg_right = 0;
-    } else {
-        _input.trg_left = (uint8_t)state->ltrig & 255;
-        _input.trg_right = (uint8_t)state->rtrig & 255;
+        /* BUTTONS */
+        _input.btn_a = (uint8_t)!!(buttons & CONT_A);
+        _input.btn_b = (uint8_t)!!(buttons & CONT_B);
+        _input.btn_x = (uint8_t)!!(buttons & CONT_X);
+        _input.btn_y = (uint8_t)!!(buttons & CONT_Y);
+        _input.btn_start = (uint8_t)!!(buttons & CONT_START);
+
+        /* ANALOG */
+        _input.axes_1 = ((uint8_t)(cont_state->joyx) + 128);
+        _input.axes_2 = ((uint8_t)(cont_state->joyy) + 128);
+
+        /* TRIGGERS */
+        if (!strncmp("Dreamcast Fishing Controller", cont->info.product_name, 28)) {
+            _input.trg_left = 0;
+            _input.trg_right = 0;
+        } else {
+            _input.trg_left = (uint8_t)cont_state->ltrig & 255;
+            _input.trg_right = (uint8_t)cont_state->rtrig & 255;
+        }
+    } else if (kbd) {
+        _input.axes_1 = 128; /* Neutral analog X */
+        _input.axes_2 = 128; /* Neutral analog Y */
+        
+        kbd_state = (kbd_state_t*)maple_dev_status(kbd);
+
+        _input.kbd_modifiers = (uint8_t)(kbd_state->cond.modifiers);
+        for ( uint8_t i = 0; i < MAX_PRESSED_KEYS; i++ ) {
+            _input.kbd_buttons[i] = (uint8_t)kbd_state->cond.keys[i];
+        }
     }
 
     INPT_ReceiveFromHost(_input);
@@ -262,6 +279,44 @@ translate_input(void) {
     }
     if (INPT_TriggerPressed(TRIGGER_R)) {
         return TRIG_R;
+    }
+
+    /* Keyboard buttons */
+    if (INPT_KeyboardNone()) {
+        return NONE;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_LEFT)) {
+        return LEFT;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_RIGHT)) {
+        return RIGHT;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_UP)) {
+        return UP;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_DOWN)) {
+        return DOWN;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_ENTER)) {
+        return START;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_A)) {
+        return A;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_B)) {
+        return B;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_X)) {
+        return X;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_Y)) {
+        return Y;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_PGDOWN)) {
+        return TRIG_R;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_PGUP)) {
+        return TRIG_L;
     }
 
     return NONE;

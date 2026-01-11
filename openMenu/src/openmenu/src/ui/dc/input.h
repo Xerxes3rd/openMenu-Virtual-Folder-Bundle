@@ -74,6 +74,8 @@ typedef struct __attribute__((packed)) inputs {
                     /* Note the below may not exist on some platforms */
     uint8_t axes_3; /* Secondary Analog X */
     uint8_t axes_4; /* Secondary Analog Y */
+    uint8_t kbd_modifiers;
+    uint8_t kbd_buttons[6];
 } inputs;
 
 void INPT_ReceiveFromHost(inputs _in);
@@ -86,6 +88,12 @@ float INPT_AnalogF(ANALOG_AXES axes);
 uint8_t INPT_AnalogI(ANALOG_AXES axes);
 bool INPT_TriggerPressed(TRIGGER trigger);
 uint8_t INPT_TriggerValue(TRIGGER trigger);
+bool INPT_KeyboardNone();
+bool INPT_KeyboardButton(uint8_t kbtn);
+
+#ifndef INPT_MAX_KEYBOARD_KEYS
+#define INPT_MAX_KEYBOARD_KEYS 6
+#endif
 
 /* Input Strings */
 #ifdef _arch_dreamcast
