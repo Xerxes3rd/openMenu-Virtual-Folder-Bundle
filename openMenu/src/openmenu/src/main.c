@@ -171,19 +171,13 @@ processInput(void) {
     cont_state_t* cont_state;
     kbd_state_t* kbd_state;
 
-    cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-    kbd = maple_enum_type(0, MAPLE_FUNC_KEYBOARD);
-    if (!cont && !kbd) {
-        /* No controller - send neutral input to prevent phantom movement */
-        memset(&_input, 0, sizeof(inputs));
-        _input.axes_1 = 128; /* Neutral analog X */
-        _input.axes_2 = 128; /* Neutral analog Y */
-        INPT_ReceiveFromHost(_input);
-        return;
-    }
-
     /*  Reset Everything */
     memset(&_input, 0, sizeof(inputs));
+    _input.axes_1 = 128; /* Neutral analog X */
+    _input.axes_2 = 128; /* Neutral analog Y */
+
+    cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER); // note: also works with the "controller" portion of a light gun
+    kbd = maple_enum_type(0, MAPLE_FUNC_KEYBOARD);
 
     if (cont) {
         cont_state = (cont_state_t*)maple_dev_status(cont);
@@ -222,6 +216,8 @@ processInput(void) {
         for ( uint8_t i = 0; i < MAX_PRESSED_KEYS; i++ ) {
             _input.kbd_buttons[i] = (uint8_t)kbd_state->cond.keys[i];
         }
+    } else {
+        /* No controller */
     }
 
     INPT_ReceiveFromHost(_input);
@@ -283,6 +279,7 @@ translate_input(void) {
 
     /* Keyboard buttons */
     if (INPT_KeyboardNone()) {
+        // shortcut so we don't have to check everything if there are no keys pressed
         return NONE;
     }
     if (INPT_KeyboardButton(KBD_KEY_LEFT)) {
@@ -297,27 +294,31 @@ translate_input(void) {
     if (INPT_KeyboardButton(KBD_KEY_DOWN)) {
         return DOWN;
     }
+    if (INPT_KeyboardButton(KBD_KEY_Z)) {
+        return A;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_X) || INPT_KeyboardButton(KBD_KEY_ESCAPE)) {
+        return B;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_A)) {
+        return X;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_S)) {
+        return Y;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_PGUP) || INPT_KeyboardButton(KBD_KEY_Q)) {
+        return TRIG_L;
+    }
+    if (INPT_KeyboardButton(KBD_KEY_PGDOWN) || INPT_KeyboardButton(KBD_KEY_W)) {
+        return TRIG_R;
+    }
     if (INPT_KeyboardButton(KBD_KEY_ENTER)) {
         return START;
     }
-    if (INPT_KeyboardButton(KBD_KEY_A)) {
+    if (INPT_KeyboardButton(KBD_KEY_SPACE)) {
         return A;
     }
-    if (INPT_KeyboardButton(KBD_KEY_B)) {
-        return B;
-    }
-    if (INPT_KeyboardButton(KBD_KEY_X)) {
-        return X;
-    }
-    if (INPT_KeyboardButton(KBD_KEY_Y)) {
-        return Y;
-    }
-    if (INPT_KeyboardButton(KBD_KEY_PGDOWN)) {
-        return TRIG_R;
-    }
-    if (INPT_KeyboardButton(KBD_KEY_PGUP)) {
-        return TRIG_L;
-    }
+
 
     return NONE;
 }
